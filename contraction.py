@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[6]:
-
-
 from entailment import Resolution
 
 class BeliefContraction:
@@ -21,7 +18,7 @@ class BeliefContraction:
     def contract(self, formula):
         """
         Contract the belief base by a formula.
-        Removes formulas to ensure the formula is no longer entailed.
+        Remove formulas as needed to ensure the formula is no longer entailed.
         """
         if not Resolution.entails(self.belief_base.list_beliefs(), formula):
             print(f"No need to contract. Belief base does not entail '{formula}'.")
@@ -39,17 +36,5 @@ class BeliefContraction:
             if not Resolution.entails(self.belief_base.list_beliefs(), formula):
                 print(f"Contracted successfully by removing '{belief}'.")
                 return
-        print("Warning: Could not fully contract.")
-
-
-# In[10]:
-
-
-get_ipython().system('jupyter nbconvert --to script contraction.ipynb')
-
-
-# In[ ]:
-
-
-
-
+        
+        print("Warning: Could not fully contract the belief base.")

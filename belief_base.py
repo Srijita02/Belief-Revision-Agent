@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[5]:
-
-
 class BeliefBase:
     def __init__(self):
         """Initialize an empty belief base."""
@@ -36,92 +33,40 @@ class BeliefBase:
         sorted_beliefs = sorted(self.beliefs)
         return "Belief Base:\n" + "\n".join(f"- {belief}" for belief in sorted_beliefs)
 
-
-# Example usage:
 if __name__ == "__main__":
     bb = BeliefBase()
 
-    # Adding a set of beliefs
+    # Big and smart belief base
     initial_beliefs = [
-        "(A ∨ B)",
-        "(¬A ∨ C)",
-        "(¬B ∨ D)",
-        "(E ∨ F)",
-        "(¬E ∨ G)",
-        "(H ∨ I)",
-        "(¬H ∨ J)",
-        "(K ∨ L)",
-        "(¬K ∨ M)",
-        "(N ∨ O)",
-        "(P ∨ Q)",
-        "(¬P ∨ R)",
-        "(S ∨ T)",
-        "(U ∨ V)",
-        "(W ∨ X)",
-        "(Y ∨ Z)",
-        "(¬Y ∨ A)",
-        "(¬X ∨ B)",
-        "(¬W ∨ C)",
-        "(¬U ∨ D)",
-        "(¬A ∨ (B ∧ C))",
-        "((D ∧ E) ∨ (F ∧ G))",
-        "(H ∨ (I ∧ J))",
-        "((K ∨ L) ∧ (M ∨ ¬N))",
-        "(O ∧ (P ∨ Q))",
-        "(¬R ∨ (S ∧ T))",
-        "((U ∨ V) ∧ (¬W ∨ X))",
-        "(Y ∨ (Z ∧ A))",
-        "((B ∧ C) ∨ (D ∧ ¬E))",
-        "(F ∨ (G ∧ H ∨ I))",
-        "(J ∨ (¬K ∧ L))",
-        "((M ∧ N) ∨ (O ∨ ¬P))",
-        "(Q ∨ (R ∧ (S ∨ T)))",
-        "((U ∨ V) ∧ (W ∨ ¬X))",
-        "(Y ∧ (Z ∨ (A ∧ B)))",
-        "(¬(C ∧ D) ∨ (E ∨ F))",
-        "((G ∧ ¬H) ∨ (I ∧ J))",
-        "(K ∨ (L ∧ (M ∨ ¬N)))",
-        "((O ∨ P) ∧ (¬Q ∨ R))",
-        "(S ∧ (T ∨ U))",
-        "(V ∨ (W ∧ ¬X))",
-        "((Y ∧ Z) ∨ (A ∧ B))",
-        "(¬(C ∧ D) ∨ (E ∧ F))",
-        "(G ∨ (H ∧ (I ∨ J)))"
+        "A",
+        "(¬A ∨ B)",         # A → B
+        "(¬B ∨ C)",         # B → C
+        "(¬B ∨ D)",         # B → D
+        "(¬C ∨ E)",         # C → E
+        "(¬C ∨ F)",         # C → F
+        "(¬D ∨ G)",         # D → G
+        "(¬D ∨ H)",         # D → H
+        "(¬E ∨ I)",         # E → I
+        "(¬F ∨ J)",         # F → J
+        "(¬G ∨ K)",         # G → K
+        "(¬H ∨ L)",         # H → L
+        "(¬I ∨ M)",         # I → M
+        "(¬J ∨ N)",         # J → N
+        "(¬K ∨ O)",         # K → O
+        "(¬L ∨ P)",         # L → P
+        "(M ∨ N)",          # M or N
+        "(O ∧ P)",          # O and P
+        "(¬M ∨ Q)",         # M → Q
+        "(¬N ∨ R)",         # N → R
+        "(¬O ∨ S)",         # O → S
+        "(¬P ∨ T)",         # P → T
+        "(Q ∧ R) → U",      # (Q and R) → U
+        "(S ∧ T) → V",      # (S and T) → V
+        "(U ∨ V) → W",      # (U or V) → W
     ]
 
-    # Bulk add beliefs
     for belief in initial_beliefs:
         bb.add_belief(belief)
 
     print(bb)
     print(f"\nTotal beliefs: {len(bb)}")
-
-    # Removing some beliefs
-    beliefs_to_remove = [
-        "(¬A ∨ C)", "(A ∨ B)",
-        "((K ∨ L) ∧ (M ∨ ¬N))",
-        "(Y ∨ (Z ∧ A))"
-    ]
-
-    for belief in beliefs_to_remove:
-        bb.remove_belief(belief)
-
-    print("\nAfter removing some beliefs:")
-    print(bb)
-    print(f"\nTotal beliefs: {len(bb)}")
-
-    # List all beliefs
-    beliefs_list = bb.list_beliefs()
-    print("\nBeliefs as a list:", beliefs_list)
-
-    # Clearing the entire belief base
-    #bb.clear_beliefs()
-    #print("\nAfter clearing all beliefs:")
-    #print(bb)
-
-
-# In[10]:
-
-
-#!jupyter nbconvert --to script belief_base.ipynb
-

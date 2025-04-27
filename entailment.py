@@ -1,30 +1,27 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[24]:
-
-
 # entailment.py
 
 import itertools
-import copy
 
 class CNFConverter:
     """
     Converts propositional formulas into CNF.
-    Basic version assuming input is already almost in logical form with (¬, ∨, ∧) and parentheses.
+    Basic version assuming input uses (¬, ∨, ∧) and parentheses.
     """
 
     @staticmethod
     def to_cnf(expression):
-        # This is a simple placeholder for CNF conversion
-        # Ideally, you should parse expression and apply De Morgan's laws, distribution etc.
-        # For now, assume expression is already in CNF or close enough
+        """
+        Very basic CNF converter: splits at ∧ and ∨.
+        Assumes expression is close to CNF already.
+        """
         return CNFConverter._split_clauses(expression)
 
     @staticmethod
     def _split_clauses(expression):
-        # Very basic splitter: assumes ∧ separates clauses
+        """Split expression into a list of clauses (sets of literals)."""
         expression = expression.replace(' ', '')  # Remove whitespace
         clauses = []
         level = 0
@@ -45,7 +42,7 @@ class CNFConverter:
 
     @staticmethod
     def _split_literals(clause):
-        # Split a clause into literals separated by ∨
+        """Split a clause into literals separated by ∨."""
         clause = clause.strip('()')
         literals = clause.split('∨')
         return set(literals)
@@ -53,10 +50,7 @@ class CNFConverter:
 class Resolution:
     @staticmethod
     def resolve(ci, cj):
-        """
-        Try to resolve two clauses.
-        If they contain complementary literals, produce a new clause.
-        """
+        """Try to resolve two clauses and produce resolvents."""
         resolvents = []
         for di in ci:
             for dj in cj:
@@ -77,22 +71,22 @@ class Resolution:
     @staticmethod
     def entails(belief_base, query):
         """
-        Check if the belief base entails the query.
+        Check if belief base entails the query using resolution.
         belief_base: list of formulas (strings)
-        query: a single formula (string)
+        query: single formula (string)
         """
-        # Step 1: Convert beliefs to CNF
+        # Convert beliefs to CNF
         cnf_beliefs = []
         for belief in belief_base:
             cnf_beliefs.extend(CNFConverter.to_cnf(belief))
 
-        # Step 2: Add negated query (properly split)
+        # Add negated query
         negated_query_literals = Resolution.split_query_negate(query)
         cnf_query = [{literal} for literal in negated_query_literals]
 
         clauses = cnf_beliefs + cnf_query
 
-        # Step 3: Apply resolution
+        # Apply resolution
         new = set()
         while True:
             pairs = list(itertools.combinations(clauses, 2))
@@ -100,11 +94,11 @@ class Resolution:
                 resolvents = Resolution.resolve(ci, cj)
                 for resolvent in resolvents:
                     if not resolvent:
-                        return True
+                        return True  # Empty clause derived → entailment successful
                     new.add(frozenset(resolvent))
 
             if new.issubset(set(map(frozenset, clauses))):
-                return False
+                return False  # No new resolvents → entailment failed
 
             for clause in new:
                 if set(clause) not in clauses:
@@ -114,14 +108,11 @@ class Resolution:
     def split_query_negate(query):
         """
         Negates each literal individually if query is a disjunction.
-        Example:
-            Input: (A ∨ B)
-            Output: ['¬A', '¬B']
+        Example: (A ∨ B) → [¬A, ¬B]
         """
         query = query.strip()
         if query.startswith("(") and query.endswith(")"):
             query = query[1:-1]
-
         literals = [lit.strip() for lit in query.split('∨')]
         negated_literals = [Resolution.negate(lit) for lit in literals]
         return negated_literals
@@ -129,15 +120,6 @@ class Resolution:
     @staticmethod
     def is_consistent(belief_base):
         """
-        Check if the belief base is logically consistent.
-        Consistent if it does NOT entail False.
+        Check if the belief base is consistent (does NOT entail False).
         """
         return not Resolution.entails(belief_base, "False")
-
-
-
-# In[26]:
-
-
-get_ipython().system('jupyter nbconvert --to script entailment.ipynb')
-
