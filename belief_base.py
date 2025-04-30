@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-# coding: utf-8
+import itertools
 
 class BeliefBase:
     def __init__(self):
@@ -33,40 +32,31 @@ class BeliefBase:
         sorted_beliefs = sorted(self.beliefs)
         return "Belief Base:\n" + "\n".join(f"- {belief}" for belief in sorted_beliefs)
 
-if __name__ == "__main__":
-    bb = BeliefBase()
 
-    # Big and smart belief base
-    initial_beliefs = [
-        "A",
-        "(¬A ∨ B)",         # A → B
-        "(¬B ∨ C)",         # B → C
-        "(¬B ∨ D)",         # B → D
-        "(¬C ∨ E)",         # C → E
-        "(¬C ∨ F)",         # C → F
-        "(¬D ∨ G)",         # D → G
-        "(¬D ∨ H)",         # D → H
-        "(¬E ∨ I)",         # E → I
-        "(¬F ∨ J)",         # F → J
-        "(¬G ∨ K)",         # G → K
-        "(¬H ∨ L)",         # H → L
-        "(¬I ∨ M)",         # I → M
-        "(¬J ∨ N)",         # J → N
-        "(¬K ∨ O)",         # K → O
-        "(¬L ∨ P)",         # L → P
-        "(M ∨ N)",          # M or N
-        "(O ∧ P)",          # O and P
-        "(¬M ∨ Q)",         # M → Q
-        "(¬N ∨ R)",         # N → R
-        "(¬O ∨ S)",         # O → S
-        "(¬P ∨ T)",         # P → T
-        "(Q ∧ R) → U",      # (Q and R) → U
-        "(S ∧ T) → V",      # (S and T) → V
-        "(U ∨ V) → W",      # (U or V) → W
-    ]
+# New Belief Base for the Mastermind game
+class MastermindBeliefBase:
+    def __init__(self, colors, code_length):
+        """
+        Initializes the belief base with all possible code combinations.
+        """
+        self.colors = colors
+        self.code_length = code_length
+        self.possible_codes = list(itertools.product(colors, repeat=code_length))  # All possible combinations
+        self.beliefs = set(self.possible_codes)  # Initial belief base contains all possible codes
 
-    for belief in initial_beliefs:
-        bb.add_belief(belief)
+    def remove_belief(self, formula):
+        """Remove a belief (possible code) from the belief base."""
+        self.beliefs.discard(formula)
 
-    print(bb)
-    print(f"\nTotal beliefs: {len(bb)}")
+    def add_belief(self, formula):
+        """Add a belief (possible code) to the belief base."""
+        self.beliefs.add(formula)
+
+    def list_beliefs(self):
+        """Return a list of all beliefs in the belief base."""
+        return list(self.beliefs)
+
+    def __str__(self):
+        """String representation of the belief base."""
+        return f"Belief Base contains {len(self.beliefs)} possible codes"
+

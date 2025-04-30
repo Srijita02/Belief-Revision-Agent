@@ -5,6 +5,8 @@ from belief_base import BeliefBase
 from contraction import BeliefContraction
 from entailment import Resolution
 import copy
+from mastermind_agent import MastermindAgent
+from belief_revision import BeliefMastermindAgent
 
 def create_big_belief_base():
     bb = BeliefBase()
@@ -124,6 +126,18 @@ def main():
     test_agm_postulates(bb, "E", equivalent_formula="¬¬E")  # test AGM postulates for E
 
     print("\n=== END OF TEST ===")  # printing footer for test completion
+
+    colors = ["red", "green", "blue", "yellow", "black", "white"]
+    code_length = 4
+
+    # Secret code (randomly generated for testing)
+    secret_code = ('blue', 'green', 'red', 'yellow')
+
+    print("Starting the Mastermind game...")
+
+    # Create and play the game with the belief revision agent
+    agent = MastermindAgent(colors, code_length)
+    agent.play_game(secret_code, max_turns=10)
 
 if __name__ == "__main__":
     main()  # calling the main function
