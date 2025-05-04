@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
 from belief_base import BeliefBase
 from contraction import BeliefContraction
 from expansion import BeliefExpansion
@@ -10,120 +7,187 @@ import copy
 class BeliefRevisionAgent:
     def __init__(self, belief_base=None):
         self.belief_base = belief_base or BeliefBase()
-
+    
     def expand(self, formula):
+        print(f"[EXPANSION] Adding formula '{formula}' to belief base")
         BeliefExpansion(self.belief_base).expand(formula)
+    
+    def contract(self, formula, selector='max'):
+        print(f"[CONTRACTION] Removing entailment of '{formula}' using {selector} selection")
+        BeliefContraction(self.belief_base, selector).partial_meet_contract(formula)
+    
+    def revise(self, formula, selector='max'):
+        print(f"[REVISION] Starting revision with formula '{formula}'")
+        
+        # Normalize formula for contraction purposes
+        normalized_formula = formula
+        
+        # Handle double negations
+        while normalized_formula.startswith('¬¬'):
+            normalized_formula = normalized_formula[2:]
+            print(f"[NORMALIZATION] Simplified double negation to '{normalized_formula}'")
+        
+        # Determine what to contract
+        if normalized_formula.startswith('¬') and '(' in normalized_formula and normalized_formula.endswith(')'):
+            # Extract the content between parentheses in a negated formula
+            open_paren_index = normalized_formula.find('(')
+            negated = normalized_formula[open_paren_index+1:-1]
+            print(f"[NORMALIZATION] Extracted inner formula from negation: '{negated}'")
+        else:
+            negated = f"¬({normalized_formula})"
+            print(f"[NORMALIZATION] Created negation for contraction: '{negated}'")
+        
+        # Perform contraction and expansion
+        self.contract(negated, selector)
+        self.expand(formula)  # Keep original formula for expansion
+        print(f"[REVISION] Completed revision with '{formula}'")
 
-    def contract(self, formula, selector='all'):
-        priorities = {b: i for i, b in enumerate(self.belief_base.list_beliefs(), 1)}
-        BeliefContraction(self.belief_base, priorities).partial_meet_contract(formula, selector=selector)
-
-    def revise(self, formula, selector='all'):
-        negated_formula = f"¬({formula})"
-        if formula.startswith("¬") and formula[1] == "(" and formula.endswith(")"):
-            negated_formula = formula[2:-1]
-        self.contract(negated_formula, selector)
-        self.expand(formula)
-
-def test_agm_postulates(original_bb, formula, revised_bb, equivalent_formula=None):
-    original = set(original_bb.list_beliefs())
-    revised = set(revised_bb.list_beliefs())
-    initially_entailed = Resolution.entails(list(original), formula)
-
-    print(f"\n🧪 AGM Postulates for revision with: '{formula}'")
-
-    success = Resolution.entails(list(revised), formula)
-    print(f"✔️ Success: {'PASSED' if success else 'FAILED'}")
-
-    inclusion = revised.issubset(original.union({formula}))
-    print(f"📥 Inclusion: {'PASSED' if inclusion else 'FAILED'}")
-
-    if not initially_entailed:
-        vacuity = original == revised
-        print(f"🫙 Vacuity: {'PASSED' if vacuity else 'FAILED'}")
+def test_agm_postulates(before, formula, after, equiv_formula=None):
+    print(f"\n[TEST] Testing AGM revision with: '{formula}'")
+    original_set = set(before.list_beliefs())
+    revised_set = set(after.list_beliefs())
+    
+    # Test Success postulate
+    success_result = Resolution.entails(list(revised_set), formula)
+    print(f"[ENTAILMENT] Testing if revised base entails '{formula}': {success_result}")
+    print("[TEST] Success:", "PASSED" if success_result else "FAILED")
+    
+    # Test Inclusion postulate
+    inclusion_result = revised_set.issubset(original_set.union({formula}))
+    print("[TEST] Inclusion:", "PASSED" if inclusion_result else "FAILED")
+    
+    # Test Vacuity postulate
+    entailment_result = Resolution.entails(list(original_set), formula)
+    print(f"[ENTAILMENT] Testing if original base already entails '{formula}': {entailment_result}")
+    if not entailment_result:
+        vacuity_result = original_set == revised_set
+        print("[TEST] Vacuity:", "PASSED" if vacuity_result else "FAILED")
     else:
-        print("🫙 Vacuity: (not applicable, formula was entailed)")
-
-    consistent = Resolution.is_consistent(list(revised))
-    print(f"✅ Consistency: {'PASSED' if consistent else 'FAILED'}")
-
-    if equivalent_formula:
-        bb1 = copy.deepcopy(original_bb)
-        bb2 = copy.deepcopy(original_bb)
-        agent1 = BeliefRevisionAgent(bb1)
-        agent2 = BeliefRevisionAgent(bb2)
+        print("[TEST] Vacuity: (not applicable)")
+    
+    # Test Consistency postulate
+    consistency_result = Resolution.is_consistent(list(revised_set))
+    print("[CONSISTENCY] Checking if revised belief base is consistent")
+    print("[TEST] Consistency:", "PASSED" if consistency_result else "FAILED")
+    
+    # Test Extensionality postulate
+    if equiv_formula:
+        print(f"[EXTENSIONALITY] Testing if revision with '{formula}' equals revision with '{equiv_formula}'")
+        base1 = copy.deepcopy(before)
+        base2 = copy.deepcopy(before)
+        agent1 = BeliefRevisionAgent(base1)
+        agent2 = BeliefRevisionAgent(base2)
         agent1.revise(formula)
-        agent2.revise(equivalent_formula)
-        extensional = set(agent1.belief_base.list_beliefs()) == set(agent2.belief_base.list_beliefs())
-        print(f"🔁 Extensionality (with '{equivalent_formula}'): {'PASSED' if extensional else 'FAILED'}")
+        agent2.revise(equiv_formula)
+        set1 = set(agent1.belief_base.list_beliefs())
+        set2 = set(agent2.belief_base.list_beliefs())
+        extensionality_result = set1 == set2
+        print("[TEST] Extensionality:", f"{'PASSED' if extensionality_result else 'FAILED'}")
+        
+        if not extensionality_result:
+            print("[EXTENSIONALITY] Difference in belief sets:")
+            print(f"  - Set 1 (revised with '{formula}'): {set1}")
+            print(f"  - Set 2 (revised with '{equiv_formula}'): {set2}")
+            only_in_set1 = set1 - set2
+            only_in_set2 = set2 - set1
+            if only_in_set1:
+                print(f"  - Only in Set 1: {only_in_set1}")
+            if only_in_set2:
+                print(f"  - Only in Set 2: {only_in_set2}")
     else:
-        print("🔁 Extensionality: (not tested – no equivalent formula provided)")
+        print("[TEST] Extensionality: (not tested)")
+    print("----------------------------------------------------------------------------------------------------------------------------")
 
-def create_sample_belief_base():
+def create_sample_base():
+    print("[BELIEF BASE] Creating sample belief base")
     bb = BeliefBase()
-    bb.add_belief("A")
-    bb.add_belief("A → B")
-    bb.add_belief("(B ∧ C) → D")
-    bb.add_belief("D ↔ E")
-    bb.add_belief("(F ∨ G) → H")
-    bb.add_belief("(H ∧ I) ↔ J")
-    bb.add_belief("J → K")
-    bb.add_belief("F")
-    bb.add_belief("C ∨ L")
-    bb.add_belief("M ∧ N")
-    bb.add_belief("(¬K ∨ N) → O")
-    bb.add_belief("(P ∨ Q) → R")
-    bb.add_belief("(R ∧ S) ↔ (T ∨ U)")
-    bb.add_belief("¬(¬E) → V")
-    bb.add_belief("(V ∧ W) → X")
+    formulas = [
+        # Original formulas
+        "A", 
+        "(¬A ∨ B)", 
+        "(¬B ∨ C)", 
+        "(¬C ∨ D)", 
+        "(D → E)", 
+        "(E ∨ F)", 
+        "G",
+        
+        # Additional simple formulas
+        "H",
+        "I",
+        
+        # Additional implications
+        "(G → H)",
+        "(H → I)",
+        "(I → J)",
+        
+        # More complex formulas
+        "(A ∧ B)",
+        "(C ∨ D)",
+        "((A ∧ B) → (C ∨ D))",
+        "(¬F → G)"
+    ]
+    for b in formulas:
+        bb.add_belief(b)
+        print(f"[BELIEF BASE] Added belief: '{b}'")
+    print(f"[BELIEF BASE] Created belief base with {len(formulas)} beliefs")
     return bb
 
-def user_interaction_test():
-    bb = create_sample_belief_base()
-    agent = BeliefRevisionAgent(copy.deepcopy(bb))
-
-    print("\n=== Initial Belief Base ===")
-    for i, belief in enumerate(bb.list_beliefs(), 1):
-        print(f"{i}. {belief}")
-
-    formula = input("\nEnter a propositional formula to revise with: ").strip()
-    agent.revise(formula)
-
-    print("\n🔁 Revised Belief Base:")
-    for belief in agent.belief_base.list_beliefs():
-        print("-", belief)
-
-    test_agm_postulates(bb, formula, agent.belief_base)
-
-def run_batch_tests():
-    test_cases = [
-        ("B", "¬¬B"),
+def batch_test():
+    print("\n[BATCH TEST] Starting batch tests")
+    tests = [
+        ("C", "(¬¬C)"),
         ("E", None),
         ("F", None),
-        ("K", None),
+        ("D", None),
         ("(A ∨ B)", None),
-        ("(¬J ∨ K)", None),
-        ("(¬C ∨ H)", "(¬¬C ∨ H)")
+        ("(¬G ∨ A)", None),
+        ("(¬C ∨ G)", "(¬¬C ∨ G)"),
+        # Additional test cases
+        ("J", None),
+        ("(¬H)", None),
+        ("((C ∧ D) → E)", None)
     ]
+    for i, (fml, equiv) in enumerate(tests, 1):
+        print(f"\n[BATCH TEST] Test {i}: '{fml}'")
+        base = create_sample_base()
+        agent = BeliefRevisionAgent(copy.deepcopy(base))
+        agent.revise(fml)
+        test_agm_postulates(base, fml, agent.belief_base, equiv)
+    print("\n[BATCH TEST] All batch tests completed")
 
-    for formula, equiv in test_cases:
-        bb = create_sample_belief_base()
-        agent = BeliefRevisionAgent(copy.deepcopy(bb))
-        agent.revise(formula)
-        test_agm_postulates(bb, formula, agent.belief_base, equivalent_formula=equiv)
+def manual_test():
+    print("\n[MANUAL TEST] Starting manual test")
+    base = create_sample_base()
+    agent = BeliefRevisionAgent(copy.deepcopy(base))
+    
+    print("\n[MANUAL TEST] Initial Belief Base:")
+    for b in base.list_beliefs():
+        print(f"- {b}")
+    
+    fml = input("\n[MANUAL TEST] Enter formula to revise with: ").strip()
+    agent.revise(fml)
+    
+    print("\n[MANUAL TEST] Revised Belief Base:")
+    for b in agent.belief_base.list_beliefs():
+        print(f"- {b}")
+    
+    test_agm_postulates(base, fml, agent.belief_base)
+    print("[MANUAL TEST] Manual test completed")
 
 def main():
-    print("=== Belief Revision Agent: AGM Testing ===")
+    print("=== Belief Revision Agent ===")
     while True:
-        choice = input("\nChoose an option:\n1. Manual user input\n2. Run batch test cases\n3. Exit\n> ").strip()
+        choice = input("\n1. Manual input\n2. Run batch tests\n3. Exit\n> ").strip()
         if choice == '1':
-            user_interaction_test()
+            manual_test()
         elif choice == '2':
-            run_batch_tests()
+            batch_test()
         elif choice == '3':
+            print("[SYSTEM] Exiting program")
             break
         else:
-            print("Invalid choice. Try again.")
+            print("[SYSTEM] Invalid choice, please try again")
 
 if __name__ == "__main__":
+    print("[SYSTEM] Starting Belief Revision Agent")
     main()
