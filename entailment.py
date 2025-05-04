@@ -8,6 +8,7 @@ import re
 import time
 from functools import lru_cache
 
+
 # ---------- CNF Converter ----------
 
 class Formula:
@@ -15,8 +16,8 @@ class Formula:
         self.op = op
         self.left = left
         self.right = right
-        self._str_repr = None  # Cache for string representation
-        self._hash = None      # Cache for hash value
+        self._str_repr = None  # cache for string representation
+        self._hash = None  # cache for hash value
 
     def __repr__(self):
         if self._str_repr is None:
@@ -27,14 +28,14 @@ class Formula:
             else:
                 self._str_repr = self.op  # atomic
         return self._str_repr
-    
+
     def __eq__(self, other):
         if not isinstance(other, Formula):
             return False
-        return (self.op == other.op and 
-                self.left == other.left and 
+        return (self.op == other.op and
+                self.left == other.left and
                 self.right == other.right)
-    
+
     def __hash__(self):
         if self._hash is None:
             if self.op in {'∧', '∨', '→', '↔'}:
@@ -47,77 +48,70 @@ class Formula:
 
 
 class CNFConverter:
-    _cache = {}  # Class-level cache for CNF conversions
-    _parse_cache = {}  # Cache for parsed expressions
-    _equiv_cache = {}  # Cache for equivalent formulas
+    _cache = {}  # class-level cache for CNF conversions
+    _parse_cache = {}  # cache for parsed expressions
+    _equiv_cache = {}  # cache for equivalent formulas
 
     @staticmethod
     def normalize_formula(expr_str):
-        """Normalize formula to handle logical equivalence."""
-        # Handle double negation
+        """normalize formula to handle logical equivalence."""
         expr = expr_str
-        while expr.startswith('¬¬'):
+        while expr.startswith('¬¬'):  # handle double negation
             expr = expr[2:]
         return expr
 
     @staticmethod
     def is_equivalent(expr1, expr2):
-        """Check if two formulas are logically equivalent."""
-        # Simple case: identical formulas
-        if expr1 == expr2:
+        """check if two formulas are logically equivalent."""
+        if expr1 == expr2:  # identical formulas are equivalent
             return True
-            
-        # Simple case: double negation
-        if expr1.startswith('¬¬') and expr1[2:] == expr2:
+
+        if expr1.startswith('¬¬') and expr1[2:] == expr2:  # double negation equivalence
             return True
-        if expr2.startswith('¬¬') and expr2[2:] == expr1:
+        if expr2.startswith('¬¬') and expr2[2:] == expr1:  # double negation equivalence
             return True
-            
-        # Add more equivalence checks as needed
-        
-        # Cache the result
+
+        # cache the result
         key = (expr1, expr2)
         if key in CNFConverter._equiv_cache:
             return CNFConverter._equiv_cache[key]
-            
-        # Default to false if we can't determine equivalence
+
         CNFConverter._equiv_cache[key] = False
         return False
 
     @staticmethod
     def parse(expr):
-        # Check cache first
+        # check cache first
         if expr in CNFConverter._parse_cache:
             return CNFConverter._parse_cache[expr]
-            
-        expr = expr.replace(' ', '')
-        
-        # Special case for double negation (¬¬X)
+
+        expr = expr.replace(' ', '')  # remove spaces
+
+        # special case for double negation (¬¬X)
         if expr.startswith('¬¬') and len(expr) > 2:
             inner = expr[2:]
             inner_formula = CNFConverter.parse(inner)
             CNFConverter._parse_cache[expr] = inner_formula
             return inner_formula
-            
-        # Handle simple cases directly for better performance
+
+        # handle simple cases directly for better performance
         if re.match(r'^[A-Za-z][A-Za-z0-9]*$', expr):
             result = Formula(expr)
             CNFConverter._parse_cache[expr] = result
             return result
-            
+
         if expr.startswith('¬') and re.match(r'^¬[A-Za-z][A-Za-z0-9]*$', expr):
             atom = expr[1:]
             result = Formula('¬', Formula(atom))
             CNFConverter._parse_cache[expr] = result
             return result
-            
+
         tokens = re.findall(r'¬|→|↔|∧|∨|\(|\)|[A-Za-z][A-Za-z0-9]*', expr)
-        # Sanity check - if no tokens, return a placeholder
-        if not tokens:
+        if not tokens:  # sanity check - if no tokens
             result = Formula('⊤')  # True constant as placeholder
             CNFConverter._parse_cache[expr] = result
             return result
-            
+
         output = []
         ops = []
 
@@ -146,7 +140,7 @@ class CNFConverter:
                             output.append(Formula(op, left, right))
                     if not ops:
                         raise ValueError(f"Mismatched parentheses in: {expr}")
-                    ops.pop()  # Remove the '('
+                    ops.pop()  # remove the '('
                 else:
                     while ops and ops[-1] != '(' and precedence(ops[-1]) >= precedence(token):
                         op = ops.pop()
@@ -161,7 +155,6 @@ class CNFConverter:
                             right = output.pop()
                             left = output.pop()
                             output.append(Formula(op, left, right))
-                    ops.append(token)
 
             while ops:
                 if ops[-1] == '(':
@@ -181,13 +174,12 @@ class CNFConverter:
 
             if not output:
                 raise ValueError(f"Empty formula: {expr}")
-                
+
             result = output[0]
             CNFConverter._parse_cache[expr] = result
             return result
-            
+
         except (IndexError, ValueError) as e:
-            # Fallback for problematic formulas - handle simple cases
             if expr.startswith('¬') and len(expr) > 1:
                 inner = expr[1:]
                 if inner.startswith('(') and inner.endswith(')'):
@@ -196,8 +188,7 @@ class CNFConverter:
                     result = Formula('¬', Formula(inner))
                     CNFConverter._parse_cache[expr] = result
                     return result
-            
-            # Last resort - return a placeholder formula to avoid crashing
+
             result = Formula('⊤')  # True constant as placeholder
             CNFConverter._parse_cache[expr] = result
             return result
@@ -207,7 +198,7 @@ class CNFConverter:
     def eliminate_implications(f):
         if f.op == '→':
             return Formula('∨', Formula('¬', CNFConverter.eliminate_implications(f.left)),
-                                 CNFConverter.eliminate_implications(f.right))
+                           CNFConverter.eliminate_implications(f.right))
         elif f.op == '↔':
             A = CNFConverter.eliminate_implications(f.left)
             B = CNFConverter.eliminate_implications(f.right)
@@ -271,84 +262,83 @@ class CNFConverter:
 
     @staticmethod
     def to_cnf(expr_str):
-        # Set a timeout for CNF conversion
+        #set a timeout for CNF conversion
         start_time = time.time()
-        timeout = 5  # 5 seconds timeout
-        
-        # Check cache first
+        timeout = 5  #5 seconds timeout
+
+        #check cache first
         if expr_str in CNFConverter._cache:
             return CNFConverter._cache[expr_str]
-            
-        # Handle normalized forms
+
+        #handle normalized forms
         normalized_expr = CNFConverter.normalize_formula(expr_str)
         if normalized_expr != expr_str and normalized_expr in CNFConverter._cache:
             result = CNFConverter._cache[normalized_expr]
             CNFConverter._cache[expr_str] = result
             return result
-            
-        # Handle double negation special case directly
+
+        # handle double negation special case directly
         if expr_str.startswith('¬¬') and len(expr_str) > 2:
             inner = expr_str[2:]
             inner_cnf = CNFConverter.to_cnf(inner)
             CNFConverter._cache[expr_str] = inner_cnf
             CNFConverter._cache[normalized_expr] = inner_cnf
             return inner_cnf
-        
-        # Handle simple atomic formulas directly
+
+        # handle simple atomic formulas directly
         if re.match(r'^[A-Za-z][A-Za-z0-9]*$', expr_str):
             result = Formula(expr_str)
             CNFConverter._cache[expr_str] = result
             CNFConverter._cache[normalized_expr] = result
             return result
-            
+
         if expr_str.startswith('¬') and re.match(r'^¬[A-Za-z][A-Za-z0-9]*$', expr_str):
             atom = expr_str[1:]
             result = Formula('¬', Formula(atom))
             CNFConverter._cache[expr_str] = result
             CNFConverter._cache[normalized_expr] = result
             return result
-            
+
         try:
             parsed = CNFConverter.parse(expr_str)
-            
-            # Check timeout after parsing
+
+            #check timeout after parsing
             if time.time() - start_time > timeout:
-                # If timeout, return a simple placeholder for complex formulas
                 print(f"CNF conversion timeout for: {expr_str}")
-                result = Formula('⊤')  # True constant as placeholder
+                result = Formula('⊤')
                 CNFConverter._cache[expr_str] = result
                 CNFConverter._cache[normalized_expr] = result
                 return result
-                
+
             step1 = CNFConverter.eliminate_implications(parsed)
-            
-            # Check timeout after eliminating implications
+
+            # check timeout after eliminating implications
             if time.time() - start_time > timeout:
                 print(f"CNF conversion timeout for: {expr_str}")
                 result = Formula('⊤')
                 CNFConverter._cache[expr_str] = result
                 CNFConverter._cache[normalized_expr] = result
                 return result
-                
+
             step2 = CNFConverter.move_negation_inward(step1)
-            
-            # Check timeout after moving negation inward
+
+            #check timeout after moving negation inward
             if time.time() - start_time > timeout:
                 print(f"CNF conversion timeout for: {expr_str}")
                 result = Formula('⊤')
                 CNFConverter._cache[expr_str] = result
                 CNFConverter._cache[normalized_expr] = result
                 return result
-                
+
             step3 = CNFConverter.distribute_or_over_and(step2)
-            
-            # Cache the result
+
+            #cache the result
             CNFConverter._cache[expr_str] = step3
             CNFConverter._cache[normalized_expr] = step3
             return step3
         except Exception as e:
             print(f"Error in CNF conversion for {expr_str}: {e}")
-            # For error cases, provide a safe default
+            #for error cases, provide a safe default
             result = Formula('⊤')  # True constant as placeholder
             CNFConverter._cache[expr_str] = result
             CNFConverter._cache[normalized_expr] = result

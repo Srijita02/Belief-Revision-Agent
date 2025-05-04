@@ -7,5 +7,5 @@ class MastermindAgent:
         self.agent = BeliefMastermindAgent(colors, code_length)
 
     def play_game(self, secret_code, max_turns=10):
-        """Play the game using belief revision agent"""
+        """play the game using belief revision agent"""
         self.agent.play_game(secret_code, max_turns)
