@@ -33,7 +33,7 @@ class BeliefBase:
         return "Belief Base:\n" + "\n".join(f"- {belief}" for belief in sorted_beliefs)
 
 
-# New Belief Base for the Mastermind game
+#new Belief Base for the Mastermind game
 class MastermindBeliefBase:
     def __init__(self, colors, code_length):
         """
@@ -41,8 +41,8 @@ class MastermindBeliefBase:
         """
         self.colors = colors
         self.code_length = code_length
-        self.possible_codes = list(itertools.product(colors, repeat=code_length))  # All possible combinations
-        self.beliefs = set(self.possible_codes)  # Initial belief base contains all possible codes
+        self.possible_codes = list(itertools.product(colors, repeat=code_length))  #all possible combinations
+        self.beliefs = set(self.possible_codes)  #initial belief base contains all possible codes
 
     def remove_belief(self, formula):
         """remove a belief from the belief base."""

@@ -132,7 +132,6 @@ def create_sample_base():
     print("[BELIEF BASE] Creating sample belief base")
     bb = BeliefBase()
     formulas = [
-        #original formulas
         "A",
         "(¬A ∨ B)",
         "(¬B ∨ C)",
@@ -140,17 +139,11 @@ def create_sample_base():
         "(D → E)",
         "(E ∨ F)",
         "G",
-
-        # additional simple formulas
         "H",
         "I",
-
-        # additional implications
         "(G → H)",
         "(H → I)",
         "(I → J)",
-
-        # more complex formulas
         "(A ∧ B)",
         "(C ∨ D)",
         "((A ∧ B) → (C ∨ D))",
@@ -166,21 +159,17 @@ def create_sample_base():
 def batch_test():
     print("\n[BATCH TEST] Starting batch tests")
     tests = [
-        #test double negation equivalence
         ("C", "(¬¬C)"),
         ("E", "(¬¬E)"),
         ("F", "(¬¬F)"),
         ("D", "(¬¬D)"),
-
-        # test logical equivalences
         ("(A ∨ B)", "(¬(¬A ∧ ¬B))"),
         ("(¬G ∨ A)", "(G → A)"),
         ("(¬C ∨ G)", "(¬¬C ∨ G)"),
-
-        #additional test cases
         ("J", "(¬¬J)"),
         ("(¬H)", "(¬¬¬H)"),
         ("((C ∧ D) → E)", "(¬(C ∧ D) ∨ E)")
+
     ]
     for i, (fml, equiv) in enumerate(tests, 1):
         print(f"\n[BATCH TEST] Test {i}: '{fml}'")

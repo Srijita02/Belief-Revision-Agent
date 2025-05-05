@@ -1,15 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# entailment.py
-
 import itertools
 import re
 import time
 from functools import lru_cache
 
-
-# ---------- CNF Converter ----------
+#CNF Converter
 
 class Formula:
     def __init__(self, op, left=None, right=None):
@@ -344,38 +341,38 @@ class CNFConverter:
             CNFConverter._cache[normalized_expr] = result
             return result
 
-# ---------- Resolution Engine ----------
+#Resolution Engine
 
 class Resolution:
-    _negate_cache = {}  # Cache for negations
-    _clause_cache = {}  # Cache for clause generation
-    _entails_cache = {}  # Cache for entailment results
+    _negate_cache = {}  # cache for negations
+    _clause_cache = {}  # cache for clause generation
+    _entails_cache = {}  # cache for entailment results
     
     @staticmethod
     def resolve(ci, cj):
         """Try to resolve two clauses and produce resolvents."""
         resolvents = []
-        # Convert to sets if they aren't already
+        #convert to sets if they aren't already
         ci_set = set(ci)
         cj_set = set(cj)
         
-        # Find potential complementary literals more efficiently
+        #find potential complementary literals more efficiently
         for di in ci_set:
             neg_di = Resolution.negate(di)
             if neg_di in cj_set:
-                # Found complementary literals
+                #found complementary literals
                 new_clause = (ci_set.union(cj_set)) - {di, neg_di}
                 if new_clause:  # Don't add empty set here
                     resolvents.append(new_clause)
                 else:
-                    # Empty clause - contradiction found
+                    #empty clause - contradiction found
                     resolvents.append(set())
-                    return resolvents  # Early termination
+                    return resolvents  #early termination
         return resolvents
 
     @staticmethod
     def negate(literal):
-        # Cache negation results
+        #cache negation results
         if literal in Resolution._negate_cache:
             return Resolution._negate_cache[literal]
             
@@ -409,27 +406,27 @@ class Resolution:
             if hasattr(node.left, 'op'):
                 return {f'¬{node.left.op}'}
             else:
-                # Handle edge case of invalid formula structure
-                return {'¬⊤'}  # Placeholder
+                #handle edge case of invalid formula structure
+                return {'¬⊤'}  #placeholder
         else:
             return {node.op}
 
     @staticmethod
     def entails(belief_base, query):
-        # Set timeout for entailment checking
+        #set timeout for entailment checking
         start_time = time.time()
-        timeout = 10  # 10 seconds timeout for entire entailment check
+        timeout = 10  #10 seconds timeout for entire entailment check
         
-        # Special case for empty belief base
+        # special case for empty belief base
         if not belief_base:
             return False
             
-        # Check for cached result
+        #check for cached result
         key = (tuple(sorted(belief_base)), query)
         if key in Resolution._entails_cache:
             return Resolution._entails_cache[key]
             
-        # Handle normalized forms
+        #handle normalized forms
         normalized_query = CNFConverter.normalize_formula(query)
         if normalized_query != query:
             normalized_key = (tuple(sorted(belief_base)), normalized_query)
@@ -438,7 +435,7 @@ class Resolution:
                 Resolution._entails_cache[key] = result
                 return result
             
-        # Special case for double negation
+        #special case for double negation
         if query.startswith('¬¬') and len(query) > 2:
             inner_query = query[2:]
             result = Resolution.entails(belief_base, inner_query)
@@ -467,13 +464,13 @@ class Resolution:
                             clause_set.add(frozen_clause)
                             clauses.append(clause)
                 except Exception as e:
-                    # Skip problematic beliefs
+                    #skip problematic beliefs
                     print(f"Warning: Skipping problematic belief: {belief}, error: {e}")
                     continue
 
-            # Add negated query clauses
+            #add negated query clauses
             try:
-                # Check if we've exceeded the timeout
+                #check if we've exceeded the timeout
                 if time.time() - start_time > timeout:
                     print(f"Entailment check timeout for query: {query}")
                     Resolution._entails_cache[key] = False
@@ -487,27 +484,26 @@ class Resolution:
                         clause_set.add(frozen_clause)
                         clauses.append(clause)
             except Exception as e:
-                # If we can't negate the query properly, it's not entailed
+                #if we can't negate the query properly, it's not entailed
                 print(f"Error negating query {query}: {e}")
                 Resolution._entails_cache[key] = False
                 return False
 
-            # Safety check for empty clauses list
+            #safety check for empty clauses list
             if not clauses:
                 Resolution._entails_cache[key] = False
                 return False
 
-            # Resolution loop with optimizations
-            max_iterations = 100  # Strict iteration limit
+            #resolution loop with optimizations
+            max_iterations = 100 
             iteration = 0
             
-            # Track processed pairs to avoid redundant work
+            #track processed pairs to avoid redundant work
             processed_pairs = set()
             
             while iteration < max_iterations:
                 iteration += 1
-                
-                # Check if we've exceeded the timeout
+            
                 if time.time() - start_time > timeout:
                     print(f"Entailment check timeout for query: {query}")
                     Resolution._entails_cache[key] = False
@@ -515,9 +511,9 @@ class Resolution:
                 
                 new_clauses_found = False
                 
-                # Process pairs based on complementary literals - limit to a batch size
+                #process pairs based on complementary literals - limit to a batch size
                 clause_pairs = []
-                max_pairs_per_iteration = 1000  # Limit number of pairs to check per iteration
+                max_pairs_per_iteration = 1000  #limit to 1000 pairs per iteration
                 pair_count = 0
                 
                 for i in range(len(clauses)):
@@ -528,7 +524,7 @@ class Resolution:
                         if pair_count >= max_pairs_per_iteration:
                             break
                             
-                        # Skip already processed pairs
+                        #skip already processed pairs
                         pair_key = (frozenset(clauses[i]), frozenset(clauses[j]))
                         if pair_key in processed_pairs:
                             continue
@@ -537,13 +533,13 @@ class Resolution:
                         pair_count += 1
                         
                         ci, cj = clauses[i], clauses[j]
-                        # Quick check if there might be complementary literals
+                        #quick check if there might be complementary literals
                         if any(Resolution.negate(lit) in cj for lit in ci):
                             clause_pairs.append((ci, cj))
                 
-                # Process all identified pairs
+                #process all identified pairs
                 for ci, cj in clause_pairs:
-                    # Check if we've exceeded the timeout
+                    #check if we've exceeded the timeout
                     if time.time() - start_time > timeout:
                         print(f"Entailment check timeout for query: {query}")
                         Resolution._entails_cache[key] = False
@@ -551,7 +547,7 @@ class Resolution:
                         
                     resolvents = Resolution.resolve(ci, cj)
                     for resolvent in resolvents:
-                        if not resolvent:  # Empty clause
+                        if not resolvent:  # empty clause found
                             Resolution._entails_cache[key] = True
                             if normalized_query != query:
                                 Resolution._entails_cache[(tuple(sorted(belief_base)), normalized_query)] = True
@@ -563,14 +559,14 @@ class Resolution:
                             clauses.append(resolvent)
                             new_clauses_found = True
                 
-                # If no new clauses found, we're done
+                #if no new clauses found, we're done
                 if not new_clauses_found:
                     Resolution._entails_cache[key] = False
                     if normalized_query != query:
                         Resolution._entails_cache[(tuple(sorted(belief_base)), normalized_query)] = False
                     return False
                 
-                # Safety check - if too many clauses, abort
+                #safety check - if too many clauses, abort
                 if len(clauses) > 10000:
                     print(f"Too many clauses generated for query: {query}")
                     Resolution._entails_cache[key] = False
@@ -578,7 +574,7 @@ class Resolution:
                         Resolution._entails_cache[(tuple(sorted(belief_base)), normalized_query)] = False
                     return False
             
-            # If we reach the iteration limit
+            #if we reach the iteration limit
             print(f"Resolution reached iteration limit for query: {query}")
             Resolution._entails_cache[key] = False
             if normalized_query != query:
@@ -586,28 +582,28 @@ class Resolution:
             return False
             
         except Exception as e:
-            # Catch any unexpected errors and return a safe default
+            # catch any unexpected errors and return a safe default
             print(f"Error in entailment checking: {e}")
             Resolution._entails_cache[key] = False
             return False
 
     @staticmethod
     def split_query_negate(query):
-        # Set timeout for query negation
+        #set timeout for query negation
         start_time = time.time()
-        timeout = 2  # 2 seconds timeout for query negation
+        timeout = 2  #2 seconds timeout for query negation
         
-        # Handle normalized forms
+        #handle normalized forms
         normalized_query = CNFConverter.normalize_formula(query)
         if normalized_query != query:
             return Resolution.split_query_negate(normalized_query)
             
-        # Special case for double negation
+        #special case for double negation
         if query.startswith('¬¬') and len(query) > 2:
             inner = query[2:]
             return Resolution.split_query_negate(inner)
             
-        # Handle simple cases directly
+        #handle simple cases directly
         if re.match(r'^[A-Za-z][A-Za-z0-9]*$', query):
             return [f'¬{query}']
             
@@ -615,10 +611,10 @@ class Resolution:
             return [query[1:]]
             
         try:
-            # Check timeout
+           
             if time.time() - start_time > timeout:
                 print(f"Query negation timeout for: {query}")
-                # Fallback for timeout
+                #fallback for timeout
                 if query.startswith('¬'):
                     return [query[1:]]
                 return [f'¬{query}']
@@ -628,7 +624,7 @@ class Resolution:
             return [Resolution.negate(lit) for lit in disjuncts]
         except Exception as e:
             print(f"Error in query negation: {e}")
-            # For simple formulas, handle directly
+            # for simple formulas, handle directly
             if query.startswith('¬'):
                 inner = query[1:]
                 if inner.startswith('(') and inner.endswith(')'):
