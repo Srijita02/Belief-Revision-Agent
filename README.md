@@ -1,75 +1,106 @@
 # Belief Revision Agent
 
-This project builds a smart belief revision system.  
-It can expand, contract, and revise beliefs.  
-It also checks entailment between beliefs.
+A propositional logic belief revision system based on the AGM model. This system maintains a set of beliefs and updates them in a rational way when new information is encountered.
 
----
+## Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/belief-revision-agent.git
+   cd belief-revision-agent
+   ```
+
+2. Set up a Python environment (optional but recommended):
+   ```bash
+   # Create a virtual environment
+   python -m venv venv
+   
+   # Activate the virtual environment
+   # On Windows:
+   venv\Scripts\activate
+   # On macOS/Linux:
+   source venv/bin/activate
+   ```
+
+3. The system uses standard Python libraries and doesn't require additional dependencies.
+
 
 ## Project Structure
 
-| File | Purpose |
-|:---|:---|
-| `belief_base.py` | Stores and manages all beliefs. |
-| `entailment.py` | Checks if a belief can be logically derived (entailment). |
-| `contraction.py` | Removes beliefs carefully while keeping the belief base consistent. |
-| `expansion.py` | Adds new beliefs to the belief base. |
-| `test_agm.py` | Tests the behavior: entailment, contraction, and AGM postulates. |
+Ensure all files are in the same directory:
 
----
+```
+belief-revision-agent/
+├── belief_base.py       # Core belief storage
+├── entailment.py        # Resolution-based entailment checking
+├── contraction.py       # Removes beliefs while preserving consistency
+├── expansion.py         # Adds new beliefs to the belief base
+├── belief_revision.py   # Main revision operations
+├── test_agm.py          # Test suite and main executable
+├── mastermind_agent.py  # Mastermind game implementation
+└── mastermind.py        # Mastermind game rules
+```
 
-## How to Run
+## Features
 
-1. Open a terminal.
-2. Go to the project folder:
+- **Belief Base Management**: Store, add, and remove propositional formulas
+- **Logical Entailment**: Resolution-based checking if one belief follows from others
+- **Belief Operations**: Expansion, contraction, and revision of beliefs
+- **AGM Postulate Testing**: Verify that operations follow theoretical requirements
+- **Mastermind Game**: Application of belief revision to solve the Mastermind game
 
-    ```bash
-    cd Belief-Revision-Agent
-    ```
+## Running the System
 
-3. Run the smart testing file:
+1. Make sure all files are in place
+2. Run the main interactive program:
+   ```bash
+   python test_agm.py
+   ```
+3. You'll see a menu with options:
+   ```
+   === Belief Revision Agent ===
+   1. Manual input
+   2. Run batch tests
+   3. Mastermind
+   4. Exit
+   >
+   ```
+4. Enter your choice (1-4) and follow the prompts
 
-    ```bash
-    python test_agm.py
-    ```
+## Supported Formula Syntax
 
-4. You will see:
-   - Beliefs printed.
-   - Entailment results (YES/NO).
-   - Contraction happening.
-   - AGM postulates (Success, Inclusion, Consistency) being checked.
+- `A`, `B`, `C` - Atomic propositions
+- `¬` - Negation (NOT)
+- `∧` - Conjunction (AND)
+- `∨` - Disjunction (OR)
+- `→` - Implication (IMPLIES)
+- `↔` - Equivalence (IFF)
 
----
+Examples:
+- `A`
+- `(A ∧ B)`
+- `(¬A ∨ B)`
+- `(A → B)`
 
-## Belief Base
+## Using the System
 
-The belief base is big.  
-Beliefs are connected.  
-Example:
+### Option 1: Manual Input
+Enter your own formulas to see how the belief revision system works:
+- Input a formula for revision (e.g., `A`, `(A ∧ B)`, `(¬A ∨ B)`)
+- Optionally enter an equivalent formula to test extensionality
+- See the resulting belief base and AGM postulate test results
 
-- A → B
-- B → (C and D)
-- C → (E and F)
-- D → (G and H)
-- E → I
-- and so on...
+### Option 2: Batch Tests
+Run predefined test cases that demonstrate:
+- Double negation equivalence (e.g., `C` and `(¬¬C)`)
+- Logical equivalences (e.g., `(A ∨ B)` and `(¬(¬A ∧ ¬B))`)
+- AGM postulate verification for each test case
 
----
-
-## What This Agent Can Do
-
-- Add new beliefs (expansion).
-- Remove beliefs (contraction).
-- Revise beliefs (using expansion and contraction together).
-- Check logical entailment (using Resolution).
-- Test main AGM postulates:
-  - Success
-  - Inclusion
-  - Consistency
-
----
-
-## Notes
-
-- `expansion.py` is part of the project but not directly used in `test_agm.py`.
-- Contraction and entailment are the main focus.
+### Option 3: Mastermind Game
+Play the Mastermind game where the system tries to guess a secret color code:
+- The default game uses colors: red, green, blue, yellow, black, white
+- Default code length is 4
+- The system makes guesses based on belief revision
+- After each guess, the system receives feedback (correct positions, correct colors)
+- It updates its beliefs and makes a new guess
+- The game continues until the code is cracked or max turns are reached
